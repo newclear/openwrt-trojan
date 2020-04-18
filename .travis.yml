@@ -1,0 +1,119 @@
+dist: xenial
+sudo: false
+notifications:
+  email: false
+language: c
+compiler: gcc
+cache:
+  ccache: true
+  directories:
+    - "${HOME}/dl"
+    - "${HOME}/files"
+    - "${HOME}/feeds"
+git:
+  depth: 3
+  submodules: false
+addons:
+  apt:
+    packages:
+      - subversion
+      - build-essential
+      - libncurses5-dev
+      - zlib1g-dev
+      - gettext
+      - libssl-dev
+      - xsltproc
+      - zip
+env:
+  global:
+    - PACKAGE=trojan
+    - GITHUB_USER=newclear
+    - GITHUB_REPO=openwrt-trojan
+    - DOWNLOAD_DIR=${HOME}/files
+    - CONFIG_CCACHE=y
+    - SDK_PATH=http://downloads.openwrt.org/releases/19.07.2/targets
+matrix:
+  include:
+    - env: SDK_ARCH_PATH=x86/64 SDK_ARCH_NAME=x86-64
+    - if: tag IS present
+      env: SDK_ARCH_PATH=x86/generic SDK_ARCH_NAME=x86-generic
+    - if: tag IS present
+      env: SDK_ARCH_PATH=ar71xx/generic SDK_ARCH_NAME=ar71xx-generic
+    - if: tag IS present
+      env: SDK_ARCH_PATH=ramips/mt7620 SDK_ARCH_NAME=ramips-mt7620
+    - if: tag IS present
+      env: SDK_ARCH_PATH=brcm2708/bcm2709 SDK_ARCH_NAME=brcm2708-bcm2709
+    - if: tag IS present
+      env: SDK_ARCH_PATH=brcm2708/bcm2710 SDK_ARCH_NAME=brcm2708-bcm2710
+    - if: tag IS present
+      env: SDK_ARCH_PATH=brcm63xx/generic SDK_ARCH_NAME=brcm63xx-generic
+    - if: tag IS present
+      env: SDK_ARCH_PATH=bcm53xx/generic SDK_ARCH_NAME=bcm53xx
+    - if: tag IS present
+      env: SDK_ARCH_PATH=brcm47xx/generic SDK_ARCH_NAME=brcm47xx-generic
+    - if: tag IS present
+      env: SDK_ARCH_PATH=mvebu/cortexa9 SDK_ARCH_NAME=mvebu-cortexa9
+    - if: tag IS present
+      env: SDK_ARCH_PATH=mvebu/cortexa72 SDK_ARCH_NAME=mvebu-cortexa72
+    - if: tag IS present
+      env: SDK_ARCH_PATH=ipq806x/generic SDK_ARCH_NAME=ipq806x-generic
+before_install:
+  - test -d "$DOWNLOAD_DIR" || mkdir -p "$DOWNLOAD_DIR"
+  - cd "$DOWNLOAD_DIR"
+  - wget "${SDK_PATH}/${SDK_ARCH_PATH}/sha256sums" -O sha256sums
+  - |
+    if ! grep -- "-sdk-.*-${SDK_ARCH_NAME}_" sha256sums > sha256sums.small 2>/dev/null ; then
+      printf "\033[1;31m=== Can not find -sdk-.*-${SDK_ARCH_NAME}_ file in sha256sums.\033[m\n"
+      exit 1
+    fi
+  - export SDK_FILE="$(cat sha256sums.small | cut -d' ' -f2 | sed 's/*//g')"
+  - |
+    if ! sha256sum -c ./sha256sums.small 2>/dev/null ; then
+      wget "${SDK_PATH}/${SDK_ARCH_PATH}/${SDK_FILE}" -O "$SDK_FILE"
+      if ! sha256sum -c ./sha256sums.small 2>/dev/null ; then
+        printf "\033[1;31m=== SDK can not be verified!\033[m\n"
+        exit 1
+      fi
+    fi
+  - file "${DOWNLOAD_DIR}/${SDK_FILE}"
+install:
+  - test -d "${HOME}/dl" || mkdir -p "${HOME}/dl"
+  - test -d "${HOME}/feeds" || mkdir -p "${HOME}/feeds"
+  - export SDK_HOME="$(mktemp -d)"
+  - tar -Jxf "${DOWNLOAD_DIR}/${SDK_FILE}" -C "$SDK_HOME" --strip=1
+  - cd "$SDK_HOME"
+  - test -d "dl" && rm -rf dl || true
+  - test -d "feeds" && rm -rf feeds || true
+  - ln -s "${HOME}/dl/" dl
+  - ln -s "${HOME}/feeds" feeds
+before_script:
+  - cd "$SDK_HOME"
+  - rm -rf "package/${PACKAGE}"
+  - echo "src-link trojan ${TRAVIS_BUILD_DIR}" >> feeds.conf.default
+  - "./scripts/feeds update -a"
+  - "make defconfig"
+  - "./scripts/feeds install ${PACKAGE}"
+  - "make defconfig"
+  - "sed -i -E -e 's/(CONFIG_boost-libs-all=|PACKAGE_boost-.*=)./\\1n/' -e 's/(PACKAGE_boost-(system|program_options|date_time)=)n/\\1y/' .config"
+  - "./scripts/feeds uninstall python"
+  - "./scripts/feeds uninstall python3"
+script:
+  - cd "$SDK_HOME"
+  - make package/${PACKAGE}/download
+  - make package/${PACKAGE}/prepare
+  - make package/${PACKAGE}/compile
+after_success:
+  - find "${SDK_HOME}/bin/" -type f -exec ls -lh {} \;
+before_deploy:
+  - find "${SDK_HOME}/bin/" -name ${PACKAGE}*.ipk -exec cp {} "$TRAVIS_BUILD_DIR" \;
+  - ls -hl "$TRAVIS_BUILD_DIR" | grep .*\.ipk
+deploy:
+  provider: releases
+  file_glob: true
+  file: "${TRAVIS_BUILD_DIR}/*.ipk"
+  skip_cleanup: true
+  on:
+    tags: true
+    all_branches: true
+  api_key:
+    secure: KGIgwtIEAbaD0BGg3BznHfsTlDuzf0IFR4NXWdW3LXifHFYtAVwc+jOO7gNbm1qzgkqhYlPpXS1jPL5S7XaiHfNtZfY4qz3V+S4rQbTkygWsvJg43B5ljJv06sDYLdPqEuFs4wW+rtCSb47rPhBd6M8I72yH4pq6RdDbaWCj5jxOyt38O/vgQK78HxquWnZR/FBBo21QDsRUJKLktC10IwPBW6uqOcabef/pUAgwAmLmhW6aLc6ht5BV711EeUrQ/HN4DnZ+xxp3krsaa3xpnhVlAKAJO1cVdIFRZUSpxLGuXCRA6fL8bivjgnhJ0KjXTo70qNNyBz9Js2iE29WGcKod57mEwTzVadLot+g2ytJ2oekviEbiuQpQww610xmWti4jY15Zemz2dADAUDIfsAIPhV/uwptdLCk7BbJm0fbFp2PZeOEF7OuNUirJMdIz7AM5xi2c9QnF7e5NuthFtpeml6ihfLsV7RI7G0TXi9OkMK9/pQO6rZI0h/QUv68CZ8wcDaZrUKVM2TOkSj5zjXOE/g2U1i5NimbO8pdxGPTg6KQQaDmm05/2VLoRJMww+yXcNFgD9UIF0iWFHAOqgr59Qqd9JPum3ONf+yqr/H93EJOJft5ZOviGEQeez92OyLabC84pC/8RnhSZV1XfyE+3zlGeoPAraTvKn8LP0lI=
