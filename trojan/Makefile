@@ -5,10 +5,17 @@
 # See /LICENSE for more information.
 #
 include $(TOPDIR)/rules.mk
+include $(TOPDIR)/.config
 
 PKG_NAME:=trojan
 PKG_VERSION:=1.15.1
 PKG_RELEASE:=1
+
+ifneq (,$(findstring 18.06,$(CONFIG_VERSION_REPO)))
+OPENSSL_EMBEDED_1_1:=1
+else
+OPENSSL_EMBEDED_1_1:=0
+endif
 
 PKG_SOURCE_PROTO:=git
 PKG_SOURCE_URL:=https://github.com/trojan-gfw/trojan.git
@@ -18,7 +25,9 @@ PKG_SOURCE:=$(PKG_NAME)-$(PKG_VERSION)-$(PKG_SOURCE_VERSION).tar.gz
 CMAKE_INSTALL:=1
 PKG_BUILD_PARALLEL:=0
 
+ifeq ($(OPENSSL_EMBEDED_1_1),1)
 PKG_BUILD_DEPENDS:=openssl1.1
+endif
 
 PKG_LICENSE:=GPL-3.0
 
@@ -38,15 +47,16 @@ TARGET_LDFLAGS += -flto
 TARGET_CXXFLAGS += -std=c++11
 
 TARGET_CXXFLAGS := $(filter-out -O%,$(TARGET_CXXFLAGS)) -O3
-MY_OPENSSL_DIR:=$(BUILD_DIR)/openssl1.1_staging_dir/usr
 
 TARGET_CXXFLAGS += -ffunction-sections -fdata-sections
 TARGET_LDFLAGS += -Wl,--gc-sections
 
+ifeq ($(OPENSSL_EMBEDED_1_1),1)
+MY_OPENSSL_DIR:=$(BUILD_DIR)/openssl1.1_staging_dir/usr
 CMAKE_FIND_ROOT_PATH := $(MY_OPENSSL_DIR);$(CMAKE_FIND_ROOT_PATH)
 TARGET_CXXFLAGS := -I$(MY_OPENSSL_DIR)/include $(TARGET_CXXFLAGS)
 TARGET_LDFLAGS := -L$(MY_OPENSSL_DIR)/lib $(TARGET_LDFLAGS)
-
+endif
 
 
 CMAKE_OPTIONS += \
@@ -57,10 +67,13 @@ CMAKE_OPTIONS += \
 	-DENABLE_TLS13_CIPHERSUITES=ON \
 	-DFORCE_TCP_FASTOPEN=OFF \
 	-DSYSTEMD_SERVICE=OFF \
-	-DOPENSSL_USE_STATIC_LIBS=TRUE \
 	-DBoost_DEBUG=ON \
 	-DBoost_NO_BOOST_CMAKE=ON
 
+ifeq ($(OPENSSL_EMBEDED_1_1),1)
+CMAKE_OPTIONS += \
+	-DOPENSSL_USE_STATIC_LIBS=TRUE
+endif
 
 
 define Package/trojan
@@ -69,7 +82,11 @@ define Package/trojan
 	TITLE:=An unidentifiable mechanism that helps you bypass GFW
 	URL:=https://github.com/trojan-gfw/trojan
 	DEPENDS:=+libpthread +libstdcpp \
-		+boost +boost-system +boost-program_options +boost-date_time
+		+boost-system +boost-program_options +boost-date_time
+ifeq ($(OPENSSL_EMBEDED_1_1),0)
+	DEPENDS += +libopenssl
+endif
+
 endef
 
 
