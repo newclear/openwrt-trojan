@@ -9,7 +9,7 @@ include $(TOPDIR)/.config
 
 PKG_NAME:=trojan
 PKG_VERSION:=1.15.1
-PKG_RELEASE:=1
+PKG_RELEASE:=3
 
 ifneq (,$(findstring 18.06,$(CONFIG_VERSION_REPO)))
 OPENSSL_EMBEDED_1_1:=1
