@@ -32,7 +32,7 @@ endif
 
 PKG_LICENSE:=GPL-3.0
 
-PKG_MAINTAINER:=GreaterFire
+PKG_MAINTAINER:=NewClear
 
 include $(INCLUDE_DIR)/package.mk
 include $(INCLUDE_DIR)/cmake.mk
