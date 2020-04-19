@@ -31,36 +31,59 @@ env:
     - GITHUB_REPO=openwrt-trojan
     - DOWNLOAD_DIR=${HOME}/files
     - CONFIG_CCACHE=y
-    - SDK_PATH=http://downloads.openwrt.org/releases/19.07.2/targets
+    - SDK_PATH=http://downloads.openwrt.org/releases
 matrix:
   include:
-    - env: SDK_ARCH_PATH=x86/64 SDK_ARCH_NAME=x86-64
+    - env: SDK_VER=19.07.2 SDK_ARCH_PATH=x86/64 SDK_ARCH_NAME=x86-64
+    - env: SDK_VER=18.06.7 SDK_ARCH_PATH=x86/64 SDK_ARCH_NAME=x86-64
     - if: tag IS present
-      env: SDK_ARCH_PATH=x86/generic SDK_ARCH_NAME=x86-generic
+      env: SDK_VER=19.07.2 SDK_ARCH_PATH=x86/generic SDK_ARCH_NAME=x86-generic
     - if: tag IS present
-      env: SDK_ARCH_PATH=ar71xx/generic SDK_ARCH_NAME=ar71xx-generic
+      env: SDK_VER=18.06.7 SDK_ARCH_PATH=x86/generic SDK_ARCH_NAME=x86-generic
     - if: tag IS present
-      env: SDK_ARCH_PATH=ramips/mt7620 SDK_ARCH_NAME=ramips-mt7620
+      env: SDK_VER=19.07.2 SDK_ARCH_PATH=ar71xx/generic SDK_ARCH_NAME=ar71xx-generic
     - if: tag IS present
-      env: SDK_ARCH_PATH=brcm2708/bcm2709 SDK_ARCH_NAME=brcm2708-bcm2709
+      env: SDK_VER=18.06.7 SDK_ARCH_PATH=ar71xx/generic SDK_ARCH_NAME=ar71xx-generic
     - if: tag IS present
-      env: SDK_ARCH_PATH=brcm2708/bcm2710 SDK_ARCH_NAME=brcm2708-bcm2710
+      env: SDK_VER=19.07.2 SDK_ARCH_PATH=ramips/mt7620 SDK_ARCH_NAME=ramips-mt7620
     - if: tag IS present
-      env: SDK_ARCH_PATH=brcm63xx/generic SDK_ARCH_NAME=brcm63xx-generic
+      env: SDK_VER=18.06.7 SDK_ARCH_PATH=ramips/mt7620 SDK_ARCH_NAME=ramips-mt7620
     - if: tag IS present
-      env: SDK_ARCH_PATH=bcm53xx/generic SDK_ARCH_NAME=bcm53xx
+      env: SDK_VER=19.07.2 SDK_ARCH_PATH=brcm2708/bcm2709 SDK_ARCH_NAME=brcm2708-bcm2709
     - if: tag IS present
-      env: SDK_ARCH_PATH=brcm47xx/generic SDK_ARCH_NAME=brcm47xx-generic
+      env: SDK_VER=18.06.7 SDK_ARCH_PATH=brcm2708/bcm2709 SDK_ARCH_NAME=brcm2708-bcm2709
     - if: tag IS present
-      env: SDK_ARCH_PATH=mvebu/cortexa9 SDK_ARCH_NAME=mvebu-cortexa9
+      env: SDK_VER=19.07.2 SDK_ARCH_PATH=brcm2708/bcm2710 SDK_ARCH_NAME=brcm2708-bcm2710
     - if: tag IS present
-      env: SDK_ARCH_PATH=mvebu/cortexa72 SDK_ARCH_NAME=mvebu-cortexa72
+      env: SDK_VER=18.06.7 SDK_ARCH_PATH=brcm2708/bcm2710 SDK_ARCH_NAME=brcm2708-bcm2710
     - if: tag IS present
-      env: SDK_ARCH_PATH=ipq806x/generic SDK_ARCH_NAME=ipq806x-generic
+      env: SDK_VER=19.07.2 SDK_ARCH_PATH=brcm63xx/generic SDK_ARCH_NAME=brcm63xx-generic
+    - if: tag IS present
+      env: SDK_VER=18.06.7 SDK_ARCH_PATH=brcm63xx/generic SDK_ARCH_NAME=brcm63xx-generic
+    - if: tag IS present
+      env: SDK_VER=19.07.2 SDK_ARCH_PATH=bcm53xx/generic SDK_ARCH_NAME=bcm53xx
+    - if: tag IS present
+      env: SDK_VER=18.06.7 SDK_ARCH_PATH=bcm53xx/generic SDK_ARCH_NAME=bcm53xx
+    - if: tag IS present
+      env: SDK_VER=19.07.2 SDK_ARCH_PATH=brcm47xx/generic SDK_ARCH_NAME=brcm47xx-generic
+    - if: tag IS present
+      env: SDK_VER=18.06.7 SDK_ARCH_PATH=brcm47xx/generic SDK_ARCH_NAME=brcm47xx-generic
+    - if: tag IS present
+      env: SDK_VER=19.07.2 SDK_ARCH_PATH=mvebu/cortexa9 SDK_ARCH_NAME=mvebu-cortexa9
+    - if: tag IS present
+      env: SDK_VER=18.06.7 SDK_ARCH_PATH=mvebu/cortexa9 SDK_ARCH_NAME=mvebu-cortexa9
+    - if: tag IS present
+      env: SDK_VER=19.07.2 SDK_ARCH_PATH=mvebu/cortexa72 SDK_ARCH_NAME=mvebu-cortexa72
+    - if: tag IS present
+      env: SDK_VER=18.06.7 SDK_ARCH_PATH=mvebu/cortexa72 SDK_ARCH_NAME=mvebu-cortexa72
+    - if: tag IS present
+      env: SDK_VER=19.07.2 SDK_ARCH_PATH=ipq806x/generic SDK_ARCH_NAME=ipq806x-generic
+    - if: tag IS present
+      env: SDK_VER=18.06.7 SDK_ARCH_PATH=ipq806x/generic SDK_ARCH_NAME=ipq806x-generic
 before_install:
   - test -d "$DOWNLOAD_DIR" || mkdir -p "$DOWNLOAD_DIR"
   - cd "$DOWNLOAD_DIR"
-  - wget "${SDK_PATH}/${SDK_ARCH_PATH}/sha256sums" -O sha256sums
+  - wget "${SDK_PATH}/${SDK_VER}/targets/${SDK_ARCH_PATH}/sha256sums" -O sha256sums
   - |
     if ! grep -- "-sdk-.*-${SDK_ARCH_NAME}_" sha256sums > sha256sums.small 2>/dev/null ; then
       printf "\033[1;31m=== Can not find -sdk-.*-${SDK_ARCH_NAME}_ file in sha256sums.\033[m\n"
@@ -69,7 +92,7 @@ before_install:
   - export SDK_FILE="$(cat sha256sums.small | cut -d' ' -f2 | sed 's/*//g')"
   - |
     if ! sha256sum -c ./sha256sums.small 2>/dev/null ; then
-      wget "${SDK_PATH}/${SDK_ARCH_PATH}/${SDK_FILE}" -O "$SDK_FILE"
+      wget "${SDK_PATH}/${SDK_VER}/targets/${SDK_ARCH_PATH}/${SDK_FILE}" -O "$SDK_FILE"
       if ! sha256sum -c ./sha256sums.small 2>/dev/null ; then
         printf "\033[1;31m=== SDK can not be verified!\033[m\n"
         exit 1
@@ -89,9 +112,10 @@ install:
 before_script:
   - cd "$SDK_HOME"
   - rm -rf "package/${PACKAGE}"
-  - echo "src-link trojan ${TRAVIS_BUILD_DIR}" >> feeds.conf.default
   - "./scripts/feeds update -a"
   - "make defconfig"
+  - echo "src-link trojan ${TRAVIS_BUILD_DIR}" >> feeds.conf.default
+  - "./scripts/feeds update trojan"
   - "./scripts/feeds install ${PACKAGE}"
   - "make defconfig"
   - "sed -i -E -e 's/(CONFIG_boost-libs-all=|PACKAGE_boost-.*=)./\\1n/' -e 's/(PACKAGE_boost-(system|program_options|date_time)=)n/\\1y/' .config"
