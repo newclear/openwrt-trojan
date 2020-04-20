@@ -79,7 +79,7 @@ matrix:
     - if: tag IS present
       env: SDK_VER=19.07.2 SDK_ARCH_PATH=ipq806x/generic SDK_ARCH_NAME=ipq806x-generic
     - if: tag IS present
-      env: SDK_VER=18.06.7 SDK_ARCH_PATH=ipq806x/generic SDK_ARCH_NAME=ipq806x-generic
+      env: SDK_VER=18.06.7 SDK_ARCH_PATH=ipq806x/generic SDK_ARCH_NAME=ipq806x
 before_install:
   - test -d "$DOWNLOAD_DIR" || mkdir -p "$DOWNLOAD_DIR"
   - cd "$DOWNLOAD_DIR"
