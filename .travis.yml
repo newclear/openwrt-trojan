@@ -54,8 +54,8 @@ matrix:
       env: SDK_VER=18.06.7 SDK_ARCH_PATH=brcm2708/bcm2709 SDK_ARCH_NAME=brcm2708-bcm2709
     - if: tag IS present
       env: SDK_VER=19.07.2 SDK_ARCH_PATH=brcm2708/bcm2710 SDK_ARCH_NAME=brcm2708-bcm2710
-    - if: tag IS present
-      env: SDK_VER=18.06.7 SDK_ARCH_PATH=brcm2708/bcm2710 SDK_ARCH_NAME=brcm2708-bcm2710
+    # - if: tag IS present
+    #   env: SDK_VER=18.06.7 SDK_ARCH_PATH=brcm2708/bcm2710 SDK_ARCH_NAME=brcm2708-bcm2710
     - if: tag IS present
       env: SDK_VER=19.07.2 SDK_ARCH_PATH=brcm63xx/generic SDK_ARCH_NAME=brcm63xx-generic
     - if: tag IS present
@@ -74,8 +74,8 @@ matrix:
       env: SDK_VER=18.06.7 SDK_ARCH_PATH=mvebu/cortexa9 SDK_ARCH_NAME=mvebu-cortexa9
     - if: tag IS present
       env: SDK_VER=19.07.2 SDK_ARCH_PATH=mvebu/cortexa72 SDK_ARCH_NAME=mvebu-cortexa72
-    - if: tag IS present
-      env: SDK_VER=18.06.7 SDK_ARCH_PATH=mvebu/cortexa72 SDK_ARCH_NAME=mvebu-cortexa72
+    # - if: tag IS present
+    #   env: SDK_VER=18.06.7 SDK_ARCH_PATH=mvebu/cortexa72 SDK_ARCH_NAME=mvebu-cortexa72
     - if: tag IS present
       env: SDK_VER=19.07.2 SDK_ARCH_PATH=ipq806x/generic SDK_ARCH_NAME=ipq806x-generic
     - if: tag IS present
